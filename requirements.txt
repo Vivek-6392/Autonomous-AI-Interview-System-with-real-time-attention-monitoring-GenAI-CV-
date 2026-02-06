@@ -1,0 +1,12 @@
+streamlit
+opencv-python
+mediapipe==0.10.32
+numpy
+pandas
+scipy
+requests
+python-dotenv
+pdfplumber
+streamlit-webrtc
+aiortc
+streamlit-autorefresh
