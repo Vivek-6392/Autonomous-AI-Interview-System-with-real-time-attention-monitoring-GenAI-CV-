@@ -80,7 +80,7 @@ This project mirrors real-world systems like **Neurema / NemAI** and demonstrate
 ---
 
 ## 🧩 Project Structure
-
+```bash
 autonomous-viva-examiner/
 │
 ├── app.py
@@ -116,7 +116,7 @@ autonomous-viva-examiner/
 ├── session_logs.csv
 ├── attention_metrics.csv
 └── final_report.csv
-
+```
 
 ---
 
@@ -136,7 +136,7 @@ autonomous-viva-examiner/
 ---
 
 ## 📐 Architecture Diagram
-
+```bash
 ┌────────────┐
 │ Resume │
 └─────┬──────┘
@@ -171,7 +171,7 @@ autonomous-viva-examiner/
 ┌──────────────────┐
 │ CSV / Reports │
 └──────────────────┘
-
+```
 ---
 
 ## ▶️ How to Run
@@ -185,4 +185,5 @@ streamlit run app.py
 # 👤 Author
 
 Vivek Yadav
+
 Bachelor of Technology – CSE (AI & ML)
