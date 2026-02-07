@@ -1,7 +1,6 @@
 import streamlit as st
 import time
 from streamlit_webrtc import webrtc_streamer
-from streamlit_autorefresh import st_autorefresh
 
 from vision.webrtc_processor import VisionWebRTCProcessor
 from resume.parser import extract_resume_text
@@ -11,9 +10,31 @@ from state_engine.state_tracker import ConversationState, log_session
 from evaluation.report_generator import generate_report
 
 # -------------------------------------------------
-# CONFIG
+# PAGE CONFIG
 # -------------------------------------------------
 st.set_page_config(layout="wide", page_title="Autonomous AI Viva Examiner")
+
+# -------------------------------------------------
+# VIDEO CSS (FIXED SIZE + STABLE)
+# -------------------------------------------------
+st.markdown(
+    """
+    <style>
+    video {
+        width: 100% !important;
+        height: 360px !important;
+        border-radius: 12px;
+        border: 2px solid #4A4A4A;
+        object-fit: cover;
+        object-position: center;
+        transform: scale(1.2); /* 👈 ZOOM IN */
+        background: black;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
 
 VIVA_DURATION_MINUTES = 10
 VIVA_DURATION_SECONDS = VIVA_DURATION_MINUTES * 60
@@ -47,8 +68,9 @@ resume_file = st.file_uploader("Upload Resume (PDF)", type=["pdf"])
 if not resume_file:
     st.stop()
 
-resume_text = extract_resume_text(resume_file)
-init_user_csvs(st.session_state.username)
+with st.spinner("📄 Parsing resume and preparing interview..."):
+    resume_text = extract_resume_text(resume_file)
+    init_user_csvs(st.session_state.username)
 
 # -------------------------------------------------
 # SESSION INIT
@@ -60,6 +82,7 @@ if "init" not in st.session_state:
     st.session_state.start_time = time.time()
     st.session_state.chat = []
     st.session_state.current_question = None
+    st.session_state.pending_question = False
 
     st.session_state.state = ConversationState(role_type)
     st.session_state.examiner = NemAIExaminer(
@@ -67,10 +90,8 @@ if "init" not in st.session_state:
     )
 
 # -------------------------------------------------
-# LIVE TIMER (AUTO REFRESH)
+# TIMER
 # -------------------------------------------------
-st_autorefresh(interval=1000, key="viva_timer")
-
 elapsed = int(time.time() - st.session_state.start_time)
 remaining = max(0, VIVA_DURATION_SECONDS - elapsed)
 
@@ -78,12 +99,13 @@ if remaining == 0:
     st.session_state.finished = True
 
 # -------------------------------------------------
-# FIRST QUESTION (SAFE)
+# FIRST QUESTION
 # -------------------------------------------------
 if st.session_state.started and not st.session_state.chat:
-    q = st.session_state.examiner.ask_question(
-        st.session_state.state
-    )
+    with st.spinner("🧠 Generating first question..."):
+        q = st.session_state.examiner.ask_question(
+            st.session_state.state
+        )
     st.session_state.current_question = q
     st.session_state.chat.append(("Examiner", q))
 
@@ -121,11 +143,7 @@ with col1:
             )
 
             if st.session_state.state.state != "WRAP_UP":
-                q = st.session_state.examiner.ask_question(
-                    st.session_state.state
-                )
-                st.session_state.current_question = q
-                st.session_state.chat.append(("Examiner", q))
+                st.session_state.pending_question = True
             else:
                 st.session_state.finished = True
 
@@ -133,9 +151,26 @@ with col1:
         st.session_state.finished = True
 
 # -------------------------------------------------
-# CAMERA (WEBRTC)
+# NEXT QUESTION (NO DOUBLE CLICK)
+# -------------------------------------------------
+if (
+    st.session_state.pending_question
+    and not st.session_state.finished
+):
+    with st.spinner("🧠 Generating next question..."):
+        q = st.session_state.examiner.ask_question(
+            st.session_state.state
+        )
+    st.session_state.current_question = q
+    st.session_state.chat.append(("Examiner", q))
+    st.session_state.pending_question = False
+
+# -------------------------------------------------
+# CAMERA (ADJUSTED FRAME)
 # -------------------------------------------------
 with col2:
+    st.subheader("👁️ Live Attention Monitoring")
+
     if not st.session_state.finished:
         ctx = webrtc_streamer(
             key="vision",
@@ -153,7 +188,7 @@ with col2:
             ctx.video_processor.set_user(st.session_state.username)
 
 # -------------------------------------------------
-# FINAL REPORT (SAVED ONCE)
+# FINAL REPORT
 # -------------------------------------------------
 if st.session_state.finished:
 

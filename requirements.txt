@@ -10,3 +10,4 @@ pdfplumber
 streamlit-webrtc
 aiortc
 streamlit-autorefresh
+PyPDF2
