@@ -21,8 +21,11 @@ class NemAIExaminer:
 
         self.headers = {
             "Authorization": f"Bearer {OPENROUTER_API_KEY}",
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            "HTTP-Referer": "https://ai-interview.streamlit.app",
+            "X-Title": "Autonomous AI Interview System"
         }
+
 
     def ask_question(self, state):
         messages = [
