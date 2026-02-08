@@ -1,6 +1,12 @@
+import streamlit as st
 import requests
-from backend.config import *
+
 from nemai.prompts import build_system_prompt, ROLE_FOCUS
+
+
+OPENROUTER_API_KEY = st.secrets["OPENROUTER_API_KEY"]
+OPENROUTER_URL = st.secrets["OPENROUTER_URL"]
+OPENROUTER_MODEL = st.secrets["OPENROUTER_MODEL"]
 
 
 class NemAIExaminer:
@@ -19,19 +25,10 @@ class NemAIExaminer:
         }
 
     def ask_question(self, state):
-        """
-        Asks exactly ONE question.
-        Greeting is allowed ONLY on the first question.
-        """
-
         messages = [
-            {
-                "role": "system",
-                "content": self.system_prompt
-            }
+            {"role": "system", "content": self.system_prompt}
         ]
 
-        # 🔒 Enforce greeting exactly once
         if state.greeted:
             messages.append({
                 "role": "system",
@@ -66,11 +63,13 @@ class NemAIExaminer:
             timeout=30
         )
 
-        response.raise_for_status()
+        if not response.ok:
+            st.error(f"API Error {response.status_code}")
+            st.error(response.text)
+            return "Examiner API failed"
 
         question = response.json()["choices"][0]["message"]["content"].strip()
 
-        # 🔐 Lock greeting forever after first question
         if not state.greeted:
             state.greeted = True
 
