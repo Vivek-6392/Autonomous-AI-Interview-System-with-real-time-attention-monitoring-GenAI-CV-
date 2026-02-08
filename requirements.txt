@@ -1,13 +1,12 @@
 streamlit
+streamlit-webrtc
+
 opencv-python-headless==4.13.0.92
-mediapipe==0.10.32
+mediapipe==0.10.9
+
 numpy
 pandas
 scipy
 requests
-python-dotenv
 pdfplumber
-streamlit-webrtc
-aiortc
-streamlit-autorefresh
 PyPDF2
